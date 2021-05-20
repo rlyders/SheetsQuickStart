@@ -40,7 +40,7 @@ public class SheetsQuickstart {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private static Credential getCredentialsForClientSecret(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
         InputStream in = SheetsQuickstart.class.getResourceAsStream(CLIENT_SECRET_PATH);
         if (in == null) {
@@ -73,9 +73,18 @@ public class SheetsQuickstart {
     public static void main(String... args) throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+        System.out.println("\nGoogle Sheet rows via client secrets...\n");
+        writeSheetsContents(HTTP_TRANSPORT, getCredentialsForClientSecret(HTTP_TRANSPORT));
+
+        System.out.println("\nGoogle Sheet rows via service account...\n");
+        writeSheetsContents(HTTP_TRANSPORT, getCredentialsForServiceAccount());
+    }
+
+    private static void writeSheetsContents(NetHttpTransport HTTP_TRANSPORT, Credential credentials) throws GeneralSecurityException, IOException {
         final String spreadsheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
         final String range = "Class Data!A2:E";
-        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentialsForServiceAccount())
+        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         ValueRange response = service.spreadsheets().values()
@@ -86,7 +95,7 @@ public class SheetsQuickstart {
             System.out.println("No data found.");
         } else {
             System.out.println("Name, Major");
-            for (List row : values) {
+            for (List<Object> row : values) {
                 // Print columns A and E, which correspond to indices 0 and 4.
                 System.out.printf("%s, %s\n", row.get(0), row.get(4));
             }
